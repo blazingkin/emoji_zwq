@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #define MAX_USER_LEN 200
-
+#define ZWJ          0x200D
 
 // References
 ////////////////////////////////////////////////////////////////////////////////
@@ -11,6 +11,12 @@
 //    - https://en.wikipedia.org/wiki/UTF-8#Encoding
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef struct _uclist {
+    uint32_t        NumCodePoints;
+    uint64_t       *CodePoints;
+    struct _uclist *Next;
+} UnicodeList;
 
 void fail(const char *);
 
@@ -30,7 +36,6 @@ int main(int argc, char **argv) {
     uint32_t CodePointNum             = 0;
     {
         int      StringOffset  = 0;
-        int      CodePointChar = 0;
         while (StringOffset < StringLength) {
             // Switch on the length encoded in the first byte
             char FirstByte = UserString[StringOffset++];
@@ -85,6 +90,35 @@ int main(int argc, char **argv) {
         }
     } 
     printf("%d code points\n", CodePointNum);
+
+    uint64_t    *Start  = &CodePoints[0];
+    uint32_t     Length = 0;
+    UnicodeList *Head   = NULL;
+    for (int Index = 0; Index < CodePointNum; Index++) {
+        if (CodePoints[Index] == ZWJ) {
+            if (Length == 0) {
+                Start = &CodePoints[Index + 1];
+                printf("Empty segment\n");
+                continue;
+            }
+            UnicodeList *OldHead = Head;
+            Head = calloc(sizeof(UnicodeList), 1);
+            Head->Next = OldHead;
+            Head->CodePoints = Start;
+            Start = &CodePoints[Index + 1];
+        } else {
+            Length++;
+        }
+    }
+
+    if (Length != 0) {
+        UnicodeList *OldHead = Head;
+        Head = calloc(sizeof(UnicodeList), 1);
+        Head->Next = OldHead;
+        Head->CodePoints = Start;
+    }
+
+
 
     // Read in the base emoji images
 
