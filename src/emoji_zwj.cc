@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
         Head->CodePoints = Start;
     }
 
-    String str = {"twemoji-svg/1f0cf.svg", strlen("twemoji-svg/1f0cf.svg"), strlen("twemoji-svg/1f0cf.svg")};
+    Str str = Str("twemoji-svg/1f0cf.svg");
     ReadSVGFile(str, NULL);
 
     // Read in the base emoji images
