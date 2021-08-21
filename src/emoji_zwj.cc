@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "svg.hpp"
+#include <cz/string.hpp>
+
+using namespace cz;
+
 #define MAX_USER_LEN 200
 #define ZWJ          0x200D
 
@@ -10,6 +15,9 @@
 // [REF:UTF-8 Encoding]
 //    - https://en.wikipedia.org/wiki/UTF-8#Encoding
 //
+// [REF:SVG Paths]
+//    - https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct _uclist {
@@ -17,6 +25,11 @@ typedef struct _uclist {
     uint64_t       *CodePoints;
     struct _uclist *Next;
 } UnicodeList;
+
+
+typedef struct {
+
+} EmojiImage;
 
 void fail(const char *);
 
@@ -102,7 +115,7 @@ int main(int argc, char **argv) {
                 continue;
             }
             UnicodeList *OldHead = Head;
-            Head = calloc(sizeof(UnicodeList), 1);
+            Head = (UnicodeList *)calloc(sizeof(UnicodeList), 1);
             Head->Next = OldHead;
             Head->CodePoints = Start;
             Start = &CodePoints[Index + 1];
@@ -113,14 +126,17 @@ int main(int argc, char **argv) {
 
     if (Length != 0) {
         UnicodeList *OldHead = Head;
-        Head = calloc(sizeof(UnicodeList), 1);
+        Head = (UnicodeList *)calloc(sizeof(UnicodeList), 1);
         Head->Next = OldHead;
         Head->CodePoints = Start;
     }
 
-
+    String str = {"twemoji-svg/1f0cf.svg", strlen("twemoji-svg/1f0cf.svg"), strlen("twemoji-svg/1f0cf.svg")};
+    ReadSVGFile(str, NULL);
 
     // Read in the base emoji images
+
+
 
     // Combine them based on whatever the user requested
 
