@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/emoji_zwj",
+            "program": "${workspaceFolder}/bin/emoji_zwj",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
