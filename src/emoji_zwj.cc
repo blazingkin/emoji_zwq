@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include "svg.hpp"
 #include <cz/string.hpp>
-
+#include <cz/directory.hpp>
+#include <cz/heap.hpp>
+#include <iostream>
 using namespace cz;
 
 #define MAX_USER_LEN 200
@@ -23,8 +25,7 @@ using namespace cz;
 typedef struct _uclist {
     uint32_t        NumCodePoints;
     uint64_t       *CodePoints;
-    struct _uclist *Next;
-} UnicodeList;
+} UnicodeChars;
 
 
 typedef struct {
@@ -48,7 +49,7 @@ int main(int argc, char **argv) {
     uint64_t CodePoints[MAX_USER_LEN] = {0};
     uint32_t CodePointNum             = 0;
     {
-        int      StringOffset  = 0;
+        uint32_t StringOffset  = 0;
         while (StringOffset < StringLength) {
             // Switch on the length encoded in the first byte
             char FirstByte = UserString[StringOffset++];
@@ -106,36 +107,52 @@ int main(int argc, char **argv) {
 
     uint64_t    *Start  = &CodePoints[0];
     uint32_t     Length = 0;
-    UnicodeList *Head   = NULL;
-    for (int Index = 0; Index < CodePointNum; Index++) {
-        if (CodePoints[Index] == ZWJ) {
+    cz::Vector<UnicodeChars> List   = {};
+    uint64_t     index  = 0;
+    List.reserve(cz::heap_allocator(), CodePointNum);
+    for (uint32_t Index = 0; Index < CodePointNum; Index++) {
+        if (CodePoints[Index] == ZWJ || CodePoints[Index] == 0xa) {
             if (Length == 0) {
                 Start = &CodePoints[Index + 1];
-                printf("Empty segment\n");
-                continue;
+                std::cerr << "Empty segment at index " << Index << std::endl;
+                exit(1);  
             }
-            UnicodeList *OldHead = Head;
-            Head = (UnicodeList *)calloc(sizeof(UnicodeList), 1);
-            Head->Next = OldHead;
-            Head->CodePoints = Start;
+            List.insert(index++, {Length, Start});
             Start = &CodePoints[Index + 1];
+            Length = 0;
         } else {
             Length++;
         }
     }
 
-    if (Length != 0) {
-        UnicodeList *OldHead = Head;
-        Head = (UnicodeList *)calloc(sizeof(UnicodeList), 1);
-        Head->Next = OldHead;
-        Head->CodePoints = Start;
+    if (Length == 0) {
+        std::cerr << "No input" << std::endl;
+    }
+
+    if (*Start != '\0') {
+        List.insert(index++, {Length, Start});
+    }
+
+    for (int i = 0; i < index; i++) {
+        std::cout << "0x" << std::hex << List[i].CodePoints[0] << std::endl;
     }
 
     Str str = Str("twemoji-svg/1f0cf.svg");
-    ReadSVGFile(str, NULL);
-
+    Svg TheSvg = {};
+    //ReadSVGFile(str, &TheSvg);
+    cz::Allocator TheAlloc = cz::heap_allocator();
+    cz::Directory_Iterator iterator = {};
+    cz::String Result = {};
+    iterator.init("../twemoji-svg", TheAlloc, &Result);
+    
+    int n = 0;
+    while (iterator.advance(TheAlloc, &Result).is_ok() && Result.len() != 0) {
+        Result.drop(cz::heap_allocator());
+        Result = {};
+        n++;
+    }
     // Read in the base emoji images
-
+    std::cout << n << std::endl;
 
 
     // Combine them based on whatever the user requested
