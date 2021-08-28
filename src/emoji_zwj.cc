@@ -25,6 +25,7 @@ using namespace cz;
 typedef struct _uclist {
     uint32_t        NumCodePoints;
     uint64_t       *CodePoints;
+    Svg             TheSvg;
 } UnicodeChars;
 
 
@@ -111,7 +112,7 @@ int main(int argc, char **argv) {
     uint64_t     index  = 0;
     List.reserve(cz::heap_allocator(), CodePointNum);
     for (uint32_t Index = 0; Index < CodePointNum; Index++) {
-        if (CodePoints[Index] == ZWJ || CodePoints[Index] == 0xa) {
+        if (CodePoints[Index] == ZWJ || CodePoints[Index] == '\n') {
             if (Length == 0) {
                 Start = &CodePoints[Index + 1];
                 std::cerr << "Empty segment at index " << Index << std::endl;
@@ -125,16 +126,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (Length == 0) {
+    if (index == 0 && Length == 0) {
         std::cerr << "No input" << std::endl;
     }
 
-    if (*Start != '\0') {
+    // ignore trailing null byte
+    if (Length != 0 && *Start != '\0') {
         List.insert(index++, {Length, Start});
-    }
-
-    for (int i = 0; i < index; i++) {
-        std::cout << "0x" << std::hex << List[i].CodePoints[0] << std::endl;
     }
 
     Str str = Str("twemoji-svg/1f0cf.svg");
@@ -152,6 +150,16 @@ int main(int argc, char **argv) {
         n++;
     }
     // Read in the base emoji images
+    for (int i = 0; i < index; i++) {
+        Str filename = {};
+        char hex[0x28] = {0};
+        snprintf(&hex[0], 27, "../twemoji-svg/%x.svg", List[i].CodePoints[0]);
+        filename.buffer = hex;
+        filename.len = strlen(hex);
+        String TheFilename = filename.clone_null_terminate(cz::heap_allocator());
+        std::cout << TheFilename.buffer() << std::endl;
+        ReadSVGFile(filename, &List[i].TheSvg);
+    }
     std::cout << n << std::endl;
 
 

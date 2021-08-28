@@ -52,7 +52,6 @@ bool ReadSVGFile(Str path, Svg *OutputSvg)
 
             String Name = result.v.tag.name.clone_null_terminate(nameAlloc);
             if (Name == "svg") {
-                std::cout << "SVG" << ret << std::endl;
                 for (auto pair: result.v.tag.pairs) {
                     if (pair.key == "viewBox") {
                         Vector<Str> values = {};
@@ -70,7 +69,10 @@ bool ReadSVGFile(Str path, Svg *OutputSvg)
                     Element.Kind = SvgElement::Path;
                 } else if (Name == "circle") {
                     Element.Kind = SvgElement::Circle;
+                } else if (Name == "ellipse") {
+                    Element.Kind = SvgElement::Ellipse;
                 } else {
+                    std::cout << Name.buffer() << std::endl;
                     assert(false);
                 }
                 for (auto pair: result.v.tag.pairs) {
@@ -80,9 +82,28 @@ bool ReadSVGFile(Str path, Svg *OutputSvg)
                         Element.TheColor.b = color & 0xFF;
                         Element.TheColor.g = (color >> 8) & 0xFF;
                         Element.TheColor.r = (color >> 16) & 0xFF;
-                        std::cout << color << std::endl;
                     } else if (pair.key == "d") {
                         Element.Spec.path.ThePath = pair.value.clone_null_terminate(alloc);
+                    } else if (pair.key == "cx") {
+                        if (Element.Kind == SvgElement::Ellipse) {
+                            Element.Spec.ellipse.center.x = atof(pair.key.buffer);
+                        } else {
+                            assert(Element.Kind == SvgElement::Circle);
+                            Element.Spec.circle.center.x = atof(pair.key.buffer);
+                        }
+                    } else if (pair.key == "cy") {
+                        if (Element.Kind == SvgElement::Ellipse) {
+                            Element.Spec.ellipse.center.y = atof(pair.key.buffer);
+                        } else {
+                            assert(Element.Kind == SvgElement::Circle);
+                            Element.Spec.circle.center.y = atof(pair.key.buffer);
+                        }
+                    } else if (pair.key == "rx") {
+                        assert(Element.Kind == SvgElement::Ellipse);
+                        Element.Spec.ellipse.Radii.x = atof(pair.key.buffer);
+                    } else if (pair.key == "ry") {
+                        assert(Element.Kind == SvgElement::Ellipse);
+                        Element.Spec.ellipse.Radii.y = atof(pair.key.buffer);
                     }
                 }
                 OutputSvg->Elements.push(Element);

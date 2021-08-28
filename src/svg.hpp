@@ -26,7 +26,7 @@ struct Color {
 
 
 struct SvgElement {
-    enum {Path, Circle} Kind;
+    enum {Path, Circle, Ellipse} Kind;
     Color TheColor;
     union ShapeSpec {
         struct Path {
@@ -36,6 +36,10 @@ struct SvgElement {
             Point center;
             float radius;
         } circle;
+        struct Ellipse {
+            Point center;
+            Point Radii;
+        } ellipse;
     } Spec;
 };
 
