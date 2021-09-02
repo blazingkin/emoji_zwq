@@ -107,37 +107,34 @@ int main(int argc, char **argv) {
     printf("%d code points\n", CodePointNum);
 
     uint64_t    *Start  = &CodePoints[0];
-    uint32_t     Length = 0;
+    uint32_t     EmojiLength = 0;
     cz::Vector<UnicodeChars> List   = {};
-    uint64_t     index  = 0;
     List.reserve(cz::heap_allocator(), CodePointNum);
     for (uint32_t Index = 0; Index < CodePointNum; Index++) {
         if (CodePoints[Index] == ZWJ || CodePoints[Index] == '\n') {
-            if (Length == 0) {
+            if (EmojiLength == 0) {
                 Start = &CodePoints[Index + 1];
                 std::cerr << "Empty segment at index " << Index << std::endl;
                 exit(1);  
             }
-            List.insert(index++, {Length, Start});
+            List.push({EmojiLength, Start, {}});
             Start = &CodePoints[Index + 1];
-            Length = 0;
+            EmojiLength = 0;
         } else {
-            Length++;
+            EmojiLength++;
         }
     }
 
-    if (index == 0 && Length == 0) {
+    if (List.len() && EmojiLength == 0) {
         std::cerr << "No input" << std::endl;
     }
 
     // ignore trailing null byte
-    if (Length != 0 && *Start != '\0') {
-        List.insert(index++, {Length, Start});
+    if (EmojiLength != 0 && *Start != '\0') {
+        List.push({EmojiLength, Start, {}});
     }
 
-    Str str = Str("twemoji-svg/1f0cf.svg");
-    Svg TheSvg = {};
-    //ReadSVGFile(str, &TheSvg);
+
     cz::Allocator TheAlloc = cz::heap_allocator();
     cz::Directory_Iterator iterator = {};
     cz::String Result = {};
@@ -145,20 +142,15 @@ int main(int argc, char **argv) {
     
     int n = 0;
     while (iterator.advance(TheAlloc, &Result).is_ok() && Result.len() != 0) {
-        Result.drop(cz::heap_allocator());
-        Result = {};
+        Result.set_len(0);
         n++;
     }
     // Read in the base emoji images
-    for (int i = 0; i < index; i++) {
-        Str filename = {};
+    for (size_t i = 0; i < List.len(); i++) {
         char hex[0x28] = {0};
-        snprintf(&hex[0], 27, "../twemoji-svg/%x.svg", List[i].CodePoints[0]);
-        filename.buffer = hex;
-        filename.len = strlen(hex);
-        String TheFilename = filename.clone_null_terminate(cz::heap_allocator());
-        std::cout << TheFilename.buffer() << std::endl;
-        ReadSVGFile(filename, &List[i].TheSvg);
+        snprintf(&hex[0], 27, "../twemoji-svg/%lx.svg", List[i].CodePoints[0]);
+        std::cout << hex << std::endl;
+        ReadSVGFile(hex, &List[i].TheSvg);
     }
     std::cout << n << std::endl;
 

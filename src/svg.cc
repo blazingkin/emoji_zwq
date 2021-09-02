@@ -18,12 +18,12 @@ int max(int a, int b) {
 }
 
     
-bool ReadSVGFile(Str path, Svg *OutputSvg)
+bool ReadSVGFile(const char *path, Svg *OutputSvg)
 // Read / Parse an SVG file and return the result in 
 // *Result.
 // returns whether or not the operation was successful.
 {
-    FILE *svgFile = fopen(path.buffer, "r");
+    FILE *svgFile = fopen(path, "r");
     printf("test\n");
     if (svgFile == NULL)
         return false;
