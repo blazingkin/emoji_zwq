@@ -156,9 +156,16 @@ int main(int argc, char **argv) {
 
 
     // Combine them based on whatever the user requested
+    for (size_t i = 1; i < List.len(); i++) {
+        List[0].TheSvg.insert(List[i].TheSvg);
+    }
 
     // Output the new images
-
+    cz::String Output = {};
+    List[0].TheSvg.output(&Output);
+    Output.null_terminate();
+    FILE *file = fopen("out.svg", "w");
+    fprintf(file, "%s", Output.buffer());
 }
 
 

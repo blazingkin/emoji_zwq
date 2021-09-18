@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <cz/string.hpp>
 #include <cz/heap.hpp>
-
+#include <cstdio>
 using namespace cz;
 
 enum CloseType {
@@ -56,6 +56,46 @@ struct SvgElement {
             break;
         }
     }
+
+    void output(String *out) {
+        char buffer[0x40] = {0};
+        char colorBuffer[0x40] = {0};
+
+        snprintf((char *)colorBuffer, 0x40, " fill=\"#%02X%02X%02X\" ", TheColor.r, TheColor.g, TheColor.b);
+
+        switch (Kind) {
+            case Path:
+                out->append({"<path "});
+                out->append({colorBuffer});
+                out->append({"d=\""});
+                out->append(Spec.path.ThePath.as_str());
+                out->push('"');
+                out->push('/');
+                out->push('>');
+            break;
+            case Circle:
+                out->append({"<circle "});
+                out->append({colorBuffer});
+                snprintf((char *) buffer, 0x40, "cx=\"%f\" cy=\"%f\" r=\"%f\"", 
+                         Spec.circle.center.x, Spec.circle.center.y,
+                         Spec.circle.radius);
+                out->append({buffer});
+                out->push('/');
+                out->push('>');
+            break;
+            case Ellipse:
+                out->append({"<ellipse "});
+                out->append({colorBuffer});
+                snprintf((char *) buffer, 0x40, "cx=\"%f\" cy=\"%f\" rx=\"%f\" ry=\"%f\"", 
+                         Spec.ellipse.center.x, Spec.ellipse.center.y,
+                         Spec.ellipse.Radii.x,  Spec.ellipse.Radii.y);
+                out->append({buffer});
+                out->push('/');
+                out->push('>');
+            break;
+        }
+
+    }
 };
 
 struct Svg {
@@ -70,7 +110,30 @@ struct Svg {
     }
 
     void output(String *output) {
-        output->reserve(cz::heap_allocator(), 0);
+        char numBuf[0x40] = {0};
+        output->reserve(cz::heap_allocator(), 0x10000);
+        output->append(cz::Str{"<svg xmlns=\"http://www.w3.org/2000/svg\" viewbox=\""});
+        snprintf((char *)&numBuf, 0x40, "%0.0f %0.0f %0.0f %0.0f", Start.x, Start.y, Bounds.x, Bounds.y);
+
+        output->append(cz::Str{numBuf});
+        output->append(cz::Str{"\">"});
+
+        for (auto elem : Elements) {
+            elem.output(output);
+        }
+
+        output->append(cz::Str{"</svg>"});
+    }
+
+    void insert(Svg &Other) {
+        for (auto elem : Other.Elements) {
+            Elements.push(elem);
+        }
+        Start.x  = min(Start.x,  Other.Start.x);
+        Start.y  = min(Start.y,  Other.Start.y);
+
+        Bounds.x = max(Bounds.x, Other.Bounds.x);
+        Bounds.y = max(Bounds.y, Other.Bounds.y);
     }
 };
 

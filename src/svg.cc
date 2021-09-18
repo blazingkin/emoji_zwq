@@ -86,24 +86,25 @@ bool ReadSVGFile(const char *path, Svg *OutputSvg)
                         Element.Spec.path.ThePath = pair.value.clone_null_terminate(alloc);
                     } else if (pair.key == "cx") {
                         if (Element.Kind == SvgElement::Ellipse) {
-                            Element.Spec.ellipse.center.x = atof(pair.key.buffer);
+                            Element.Spec.ellipse.center.x = atof(pair.value.buffer);
+                            printf("Ellipse center x: %f\n", Element.Spec.ellipse.center.x);
                         } else {
                             assert(Element.Kind == SvgElement::Circle);
-                            Element.Spec.circle.center.x = atof(pair.key.buffer);
+                            Element.Spec.circle.center.x = atof(pair.value.buffer);
                         }
                     } else if (pair.key == "cy") {
                         if (Element.Kind == SvgElement::Ellipse) {
-                            Element.Spec.ellipse.center.y = atof(pair.key.buffer);
+                            Element.Spec.ellipse.center.y = atof(pair.value.buffer);
                         } else {
                             assert(Element.Kind == SvgElement::Circle);
-                            Element.Spec.circle.center.y = atof(pair.key.buffer);
+                            Element.Spec.circle.center.y = atof(pair.value.buffer);
                         }
                     } else if (pair.key == "rx") {
                         assert(Element.Kind == SvgElement::Ellipse);
-                        Element.Spec.ellipse.Radii.x = atof(pair.key.buffer);
+                        Element.Spec.ellipse.Radii.x = atof(pair.value.buffer);
                     } else if (pair.key == "ry") {
                         assert(Element.Kind == SvgElement::Ellipse);
-                        Element.Spec.ellipse.Radii.y = atof(pair.key.buffer);
+                        Element.Spec.ellipse.Radii.y = atof(pair.value.buffer);
                     }
                 }
                 OutputSvg->Elements.push(Element);
