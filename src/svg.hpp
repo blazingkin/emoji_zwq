@@ -26,13 +26,72 @@ struct Color {
     int r, g, b;
 };
 
+struct PathElement {
+    enum {MoveTo, Line, BezierCurve, Arc, Close} Kind;
+    union ElementSpec {
+        struct MoveTo{
+            Point theMove;
+        } move;
+        struct Line {
+            Point start;
+            Point end;
+        } line;
+        struct Curve {
+            int degree;
+            Point first;
+            Point second;
+            Point third;
+        } curve;
+        struct Arc {
+            Point Center;
+            Point Radii;
+            float rotation;
+            bool  large_arc;
+            bool  sweep;
+        } arc;
+    } Spec;
+    bool relative;
+    void output(String *out) {
+        char buffer[0x40] = {0};
+        switch (Kind) {
+            case MoveTo:
+                snprintf((char *) buffer, 0x40, "%c %f %f", relative ? 'm' : 'M',
+                                                             Spec.move.theMove.x, Spec.move.theMove.y);
+                out->append({buffer});
+            break;
+            case Line:
+                snprintf((char *)buffer, 0x40, "%c %f %f", relative ? 'l' : 'L',
+                                                           Spec.line.end.x, Spec.line.end.y);
+                out->append({buffer});
+            break;
+            case BezierCurve:
+                if (Spec.curve.degree == 3) {
+                    snprintf((char *)buffer,0x40,"%c %f %f %f %f %f %f",relative ? 'c' : 'C',
+                                                                        Spec.curve.first.x, Spec.curve.first.y,
+                                                                        Spec.curve.second.x, Spec.curve.second.y,
+                                                                        Spec.curve.third.x, Spec.curve.third.y);
+                } else if (Spec.curve.degree == 2) {
+                    snprintf((char *)buffer,0x40,"S %f %f %f %f", Spec.curve.first.x, Spec.curve.first.y,
+                                                                        Spec.curve.second.x, Spec.curve.second.y);
+                }
+                out->append({buffer});
+            break;
+            case Close:
+                out->push('Z');
+            break;
+            default:
+            break;
+        }
+    }
+};
+
 
 struct SvgElement {
     enum {Path, Circle, Ellipse} Kind;
     Color TheColor;
     union ShapeSpec {
         struct Path {
-            String ThePath;
+            Vector<PathElement> ThePath;
         } path;
         struct Circle {
             Point center;
@@ -64,15 +123,6 @@ struct SvgElement {
         snprintf((char *)colorBuffer, 0x40, " fill=\"#%02X%02X%02X\" ", TheColor.r, TheColor.g, TheColor.b);
 
         switch (Kind) {
-            case Path:
-                out->append({"<path "});
-                out->append({colorBuffer});
-                out->append({"d=\""});
-                out->append(Spec.path.ThePath.as_str());
-                out->push('"');
-                out->push('/');
-                out->push('>');
-            break;
             case Circle:
                 out->append({"<circle "});
                 out->append({colorBuffer});
@@ -93,6 +143,17 @@ struct SvgElement {
                 out->push('/');
                 out->push('>');
             break;
+            case Path:
+                out->append({"<path "});
+                out->append({colorBuffer});
+                out->append("d=\"");
+                for (auto element: Spec.path.ThePath) {
+                    element.output(out);
+                }
+                out->push('"');
+                out->push('/');
+                out->push('>');
+            break;
         }
 
     }
@@ -104,8 +165,8 @@ struct Svg {
     Point  Bounds;
 
     void translate(Point p) {
-        for (auto element: Elements) {
-            element.translate(p);
+        for (size_t i = 0; i < Elements.len(); i++) {
+            Elements[i].translate(p);
         }
     }
 

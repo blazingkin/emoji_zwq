@@ -58,7 +58,6 @@ int main(int argc, char **argv) {
                 // Single byte encoding
                 // 0b0xxxxxxx
                 CodePoints[CodePointNum++] = FirstByte;
-                printf("One byte %x\n", FirstByte);
             } else if ((FirstByte & 0xE0) == 0xC0) {
                 // Two byte encoding
                 // 0b110xxxxx 0b10xxxxxx
@@ -104,7 +103,6 @@ int main(int argc, char **argv) {
 
         }
     } 
-    printf("%d code points\n", CodePointNum);
 
     uint64_t    *Start  = &CodePoints[0];
     uint32_t     EmojiLength = 0;
@@ -125,7 +123,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (List.len() && EmojiLength == 0) {
+    if (List.len() == 0 && EmojiLength == 0) {
         std::cerr << "No input" << std::endl;
     }
 
@@ -152,11 +150,12 @@ int main(int argc, char **argv) {
         std::cout << hex << std::endl;
         ReadSVGFile(hex, &List[i].TheSvg);
     }
-    std::cout << n << std::endl;
 
-
+    Point offset = {0.0,0.0};
     // Combine them based on whatever the user requested
     for (size_t i = 1; i < List.len(); i++) {
+        offset = offset + Point{5.0, 5.0};
+        List[i].TheSvg.translate(offset);
         List[0].TheSvg.insert(List[i].TheSvg);
     }
 
