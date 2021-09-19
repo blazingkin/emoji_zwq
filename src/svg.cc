@@ -102,6 +102,9 @@ bool ReadSVGFile(const char *path, Svg *OutputSvg)
                     } else if (pair.key == "ry") {
                         assert(Element.Kind == SvgElement::Ellipse);
                         Element.Spec.ellipse.Radii.y = atof(pair.value.buffer);
+                    } else if (pair.key == "r") {
+                        assert(Element.Kind == SvgElement::Circle);
+                        Element.Spec.circle.radius = atof(pair.value.buffer);
                     }
                 }
                 OutputSvg->Elements.push(Element);
@@ -161,7 +164,9 @@ Vector<PathElement> ParsePathElement(String input) {
     for (size_t i = 0; i < input.len(); i++) {
         bool relative = false;
         PathElement NewElement = {};
-        if (isalpha(input.buffer()[i])) {
+        if (input.buffer()[i] == 'z' || input.buffer()[i] == 'Z') {
+            last = input.buffer()[i];
+        }else if (isalpha(input.buffer()[i])) {
             last = input.buffer()[i];
             i++;
         }

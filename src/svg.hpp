@@ -83,6 +83,25 @@ struct PathElement {
             break;
         }
     }
+
+    void translate(Point offset) {
+        switch (Kind) {
+            case MoveTo:
+                Spec.move.theMove = Spec.move.theMove + offset;
+            break;
+            case Line:
+                Spec.line.start = Spec.line.start + offset;
+                Spec.line.end = Spec.line.end + offset;
+            break;
+            case BezierCurve:
+                Spec.curve.first = Spec.curve.first + offset;
+                Spec.curve.second = Spec.curve.second + offset;
+                Spec.curve.third = Spec.curve.third + offset;
+            break;
+            default:
+            break;
+        }
+    }
 };
 
 
@@ -104,8 +123,12 @@ struct SvgElement {
     } Spec;
 
     void translate(Point p) {
+        size_t i;
         switch (Kind) {
             case Path:
+                for (i = 0; i < Spec.path.ThePath.len(); i++) {
+                    Spec.path.ThePath[i].translate(p);
+                }
             break;
             case Circle:
                 Spec.circle.center = Spec.circle.center + p;

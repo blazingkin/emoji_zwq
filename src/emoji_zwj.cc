@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     Point offset = {0.0,0.0};
     // Combine them based on whatever the user requested
     for (size_t i = 1; i < List.len(); i++) {
-        offset = offset + Point{5.0, 5.0};
+        offset = offset + Point{70.0, 5.0};
         List[i].TheSvg.translate(offset);
         List[0].TheSvg.insert(List[i].TheSvg);
     }
