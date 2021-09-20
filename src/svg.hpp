@@ -19,6 +19,12 @@ struct Point {
     Point operator+(const Point& other) const {
         return Point{x + other.x, y + other.y};
     }
+    Point operator*(const Point& other) const {
+        return Point{x * other.x, y * other.y};
+    }
+    Point operator*(const float& other) const {
+        return Point{x * other, y * other};
+    }
 
 };
 
@@ -102,6 +108,26 @@ struct PathElement {
             break;
         }
     }
+
+    void rescale(Point scale) {
+        switch (Kind)
+        {
+        case MoveTo:
+            Spec.move.theMove = Spec.move.theMove * scale; 
+        break;
+        case Line:
+            Spec.line.start = Spec.line.start * scale;
+            Spec.line.end   = Spec.line.end   * scale;
+        break;
+        case BezierCurve:
+            Spec.curve.first  = Spec.curve.first  * scale;
+            Spec.curve.second = Spec.curve.second * scale;
+            Spec.curve.third  = Spec.curve.third  * scale;
+        break;
+        default:
+        break;
+        }
+    }
 };
 
 
@@ -135,6 +161,25 @@ struct SvgElement {
             break;
             case Ellipse:
                 Spec.ellipse.center = Spec.ellipse.center + p; 
+            break;
+        }
+    }
+
+    void rescale(Point scale) {
+        size_t i;
+        switch (Kind) {
+            case Path:
+                for (i = 0; i < Spec.path.ThePath.len(); i++) {
+                    Spec.path.ThePath[i].rescale(scale);
+                }
+            break;
+            case Circle:
+                Spec.circle.center = Spec.circle.center  * scale;
+                Spec.circle.radius *= scale.x;
+            break;
+            case Ellipse:
+                Spec.ellipse.center = Spec.ellipse.center * scale; 
+                Spec.ellipse.Radii  = Spec.ellipse.Radii  * scale;
             break;
         }
     }
@@ -190,6 +235,12 @@ struct Svg {
     void translate(Point p) {
         for (size_t i = 0; i < Elements.len(); i++) {
             Elements[i].translate(p);
+        }
+    }
+
+    void rescale(Point scale) {
+        for (size_t i = 0; i < Elements.len(); i++) {
+            Elements[i].rescale(scale);
         }
     }
 

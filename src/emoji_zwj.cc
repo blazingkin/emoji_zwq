@@ -29,11 +29,8 @@ typedef struct _uclist {
 } UnicodeChars;
 
 
-typedef struct {
-
-} EmojiImage;
-
 void fail(const char *);
+Svg eat(Svg Eater, Svg Eaten);
 
 int main(int argc, char **argv) {
     // Read user input
@@ -153,10 +150,8 @@ int main(int argc, char **argv) {
 
     Point offset = {0.0,0.0};
     // Combine them based on whatever the user requested
-    for (size_t i = 1; i < List.len(); i++) {
-        offset = offset + Point{70.0, 5.0};
-        List[i].TheSvg.translate(offset);
-        List[0].TheSvg.insert(List[i].TheSvg);
+    for (size_t i = List.len() - 1; i > 0; i--) {
+        List[i - 1].TheSvg = eat(List[i - 1].TheSvg, List[i].TheSvg);
     }
 
     // Output the new images
@@ -165,6 +160,13 @@ int main(int argc, char **argv) {
     Output.null_terminate();
     FILE *file = fopen("out.svg", "w");
     fprintf(file, "%s", Output.buffer());
+}
+
+Svg eat(Svg Eater, Svg Eaten) {
+    Eaten.rescale(Point{0.333f, 0.333f});
+    Eaten.translate({15.0f, 25.0f});
+    Eater.insert(Eaten);
+    return Eater;
 }
 
 
